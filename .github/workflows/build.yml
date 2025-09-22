@@ -1,63 +1,74 @@
 name: Compilar Kernel Amlogic
 
-# Este workflow será acionado manually a partir da aba "Actions" do GitHub
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    # A máquina virtual que executará o trabalho
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixa o código-fonte do seu repositório
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # 2. Instala todas as dependências necessárias para a compilação cruzada
       - name: Instalar dependências
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev bc rsync git gcc-aarch64-linux-gnu
+          sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev bc rsync git gcc-arm-linux-gnueabihf
 
-      # 3. Configura o Kernel e ativa o Bluetooth
+      - name: Limpeza do build anterior
+        run: |
+          make ARCH=arm mrproper
+
       - name: Configurar o Kernel
         run: |
-          # Primeiro, gera o arquivo .config base
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- meson64_a32_defconfig
+          make ARCH=arm meson64_a32_defconfig
+          echo "Configurando Bluetooth para USB dongle Broadcom..."
+          chmod +x ./scripts/config
           
-          # Em seguida, ativa as configurações de Bluetooth via script
-          echo "Ativando configurações de Bluetooth..."
+          # Core Bluetooth support
           ./scripts/config --enable CONFIG_BT
           ./scripts/config --enable CONFIG_BT_LE
-          ./scripts/config --module CONFIG_BT_HCIUART
-          ./scripts/config --set-string CONFIG_BT_HCIUART_PROTO "h4"
+          
+          # Enable USB HCI driver (required for USB dongles)
           ./scripts/config --module CONFIG_BT_HCIUSB
+          
+          # Enable Broadcom USB Bluetooth driver as module
+          ./scripts/config --module CONFIG_BT_HCIBCM203X
+          
+          # Disable Realtek USB Bluetooth drivers
+          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL
+          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL8723A
+          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL8821A
+          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTLWCI
+          
+          # Optional: disable other vendor USB dongle drivers (e.g., Cambridge Silicon Radio, Intel)
+          ./scripts/config --disable CONFIG_BT_HCIBPA10
+          ./scripts/config --disable CONFIG_BT_HCIBFUSB
+          ./scripts/config --disable CONFIG_BT_HCIVHCI
+          ./scripts/config --disable CONFIG_BT_HCIUART
+          
+          # Enable protocol modules typically needed for Bluetooth
           ./scripts/config --module CONFIG_BT_RFCOMM
           ./scripts/config --module CONFIG_BT_RFCOMM_TTY
           ./scripts/config --module CONFIG_BT_BNEP
           ./scripts/config --set-string CONFIG_BT_BNEP_PROTO_FILTER "y"
           ./scripts/config --module CONFIG_BT_HIDP
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
-          # Finalmente, deixa o Kconfig resolver as dependências e perguntas silenciosamente
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-
-      # 4. Compila o Kernel
-      # Usamos $(nproc) para usar todos os núcleos de CPU disponíveis no runner
-      - name: Compilar o Kernel e os DTBs
+      - name: Compilar o Kernel, DTBs e módulos
         run: |
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j$(nproc)
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=../kernel_output modules_install
 
-      # 5. Empacota os arquivos compilados para download
       - name: Preparar artefatos
         run: |
-          mkdir -p ../kernel_output/
-          # Copia a imagem principal do kernel
-          cp arch/arm64/boot/Image ../kernel_output/
-          # Copia os Device Tree Blobs (DTBs)
-          cp -r arch/arm64/boot/dts/amlogic/ ../kernel_output/dts/
+          mkdir -p ../kernel_output/dts/
+          cp arch/arm/boot/zImage ../kernel_output/
+          cp arch/arm/boot/dts/amlogic/meson-gxl-s905x-*.dtb ../kernel_output/dts/
+          cp .config ../kernel_output/
 
-      # 6. Faz o upload dos arquivos compilados como um "artefato"
       - name: Upload dos Artefatos
         uses: actions/upload-artifact@v4
         with:
