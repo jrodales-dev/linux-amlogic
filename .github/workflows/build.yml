@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04  # Use older Ubuntu version for compatibility
 
     steps:
       - name: Checkout do código
@@ -21,6 +21,8 @@ jobs:
           make ARCH=arm mrproper
 
       - name: Configurar o Kernel
+        env:
+          CONFIG_: CONFIG_
         run: |
           make ARCH=arm meson64_a32_defconfig
           echo "Configurando Bluetooth para USB dongle Broadcom..."
@@ -57,6 +59,8 @@ jobs:
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
       - name: Compilar o Kernel, DTBs e módulos
+        env:
+          CONFIG_: CONFIG_
         run: |
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules
