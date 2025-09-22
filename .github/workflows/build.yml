@@ -30,32 +30,35 @@ jobs:
           
           # Core Bluetooth support
           ./scripts/config --enable CONFIG_BT
+          ./scripts/config --enable CONFIG_BT_BREDR
           ./scripts/config --enable CONFIG_BT_LE
           
-          # Enable USB HCI driver (required for USB dongles)
-          ./scripts/config --module CONFIG_BT_HCIUSB
+          # Enable USB HCI driver (main USB Bluetooth driver)
+          ./scripts/config --module CONFIG_BT_HCIBTUSB
           
-          # Enable Broadcom USB Bluetooth driver as module
-          ./scripts/config --module CONFIG_BT_HCIBCM203X
+          # Enable Broadcom USB Bluetooth support
+          ./scripts/config --module CONFIG_BT_BCM
           
-          # Disable Realtek USB Bluetooth drivers
-          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL
-          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL8723A
-          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTL8821A
-          ./scripts/config --disable CONFIG_BT_HCIBTUSB_RTLWCI
-          
-          # Optional: disable other vendor USB dongle drivers (e.g., Cambridge Silicon Radio, Intel)
-          ./scripts/config --disable CONFIG_BT_HCIBPA10
-          ./scripts/config --disable CONFIG_BT_HCIBFUSB
-          ./scripts/config --disable CONFIG_BT_HCIVHCI
-          ./scripts/config --disable CONFIG_BT_HCIUART
-          
-          # Enable protocol modules typically needed for Bluetooth
+          # Enable RFCOMM protocol support
           ./scripts/config --module CONFIG_BT_RFCOMM
-          ./scripts/config --module CONFIG_BT_RFCOMM_TTY
+          ./scripts/config --enable CONFIG_BT_RFCOMM_TTY
+          
+          # Enable BNEP protocol support  
           ./scripts/config --module CONFIG_BT_BNEP
-          ./scripts/config --set-string CONFIG_BT_BNEP_PROTO_FILTER "y"
+          ./scripts/config --enable CONFIG_BT_BNEP_MC_FILTER
+          ./scripts/config --enable CONFIG_BT_BNEP_PROTO_FILTER
+          
+          # Enable HIDP protocol support
           ./scripts/config --module CONFIG_BT_HIDP
+          
+          # Enable 6LoWPAN support (optional)
+          ./scripts/config --module CONFIG_BT_6LOWPAN || true
+          
+          # Enable debugging (optional, can be removed for production)
+          ./scripts/config --enable CONFIG_BT_SELFTEST || true
+          ./scripts/config --enable CONFIG_BT_DEBUGFS || true
+          
+          # Apply configuration
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
       - name: Compilar o Kernel, DTBs e módulos
