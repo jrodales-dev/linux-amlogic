@@ -24,40 +24,49 @@ jobs:
         env:
           CONFIG_: CONFIG_
         run: |
+          # Use ARMv7-A flags for compatibility with S905X running Android 32-bit
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export CFLAGS="-march=armv7-a"
+          export KCFLAGS="-march=armv7-a"
+
           make ARCH=arm meson64_a32_defconfig
           echo "Configurando Bluetooth para USB dongle Broadcom..."
           chmod +x ./scripts/config
-          
+
           # Core Bluetooth support
           ./scripts/config --enable CONFIG_BT
           ./scripts/config --enable CONFIG_BT_BREDR
           ./scripts/config --enable CONFIG_BT_LE
-          
+
           # Enable USB HCI driver (main USB Bluetooth driver)
           ./scripts/config --module CONFIG_BT_HCIBTUSB
-          
+
           # Enable Broadcom USB Bluetooth support
           ./scripts/config --module CONFIG_BT_BCM
-          
+
           # Enable RFCOMM protocol support
           ./scripts/config --module CONFIG_BT_RFCOMM
           ./scripts/config --enable CONFIG_BT_RFCOMM_TTY
-          
+
           # Enable BNEP protocol support  
           ./scripts/config --module CONFIG_BT_BNEP
           ./scripts/config --enable CONFIG_BT_BNEP_MC_FILTER
           ./scripts/config --enable CONFIG_BT_BNEP_PROTO_FILTER
-          
+
           # Enable HIDP protocol support
           ./scripts/config --module CONFIG_BT_HIDP
-          
+
           # Enable 6LoWPAN support (optional)
           ./scripts/config --module CONFIG_BT_6LOWPAN || true
-          
+
           # Enable debugging (optional, can be removed for production)
           ./scripts/config --enable CONFIG_BT_SELFTEST || true
           ./scripts/config --enable CONFIG_BT_DEBUGFS || true
-          
+
+          # Enable compatibility mode (important for 32-bit on 64-bit SoCs)
+          ./scripts/config --enable CONFIG_COMPAT
+
           # Apply configuration
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
@@ -65,7 +74,11 @@ jobs:
         env:
           CONFIG_: CONFIG_
         run: |
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export CFLAGS="-march=armv7-a"
+          export KCFLAGS="-march=armv7-a"
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CFLAGS="-march=armv7-a" KCFLAGS="-march=armv7-a" -j$(nproc)
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=../kernel_output modules_install
 
