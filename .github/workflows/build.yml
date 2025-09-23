@@ -31,7 +31,6 @@ jobs:
           export KCFLAGS="-march=armv7-a"
 
           make ARCH=arm meson64_a32_defconfig
-          echo "Configurando Bluetooth para USB dongle Broadcom..."
           chmod +x ./scripts/config
 
           # Core Bluetooth support
@@ -66,6 +65,16 @@ jobs:
 
           # Enable compatibility mode (important for 32-bit on 64-bit SoCs)
           ./scripts/config --enable CONFIG_COMPAT
+
+          # Disable DVB/Live TV and CA/Descrambler support
+          ./scripts/config --disable CONFIG_DVB_CORE
+          ./scripts/config --disable CONFIG_DVB_CA
+          ./scripts/config --disable CONFIG_DVB
+          ./scripts/config --disable CONFIG_DVB_USB
+          ./scripts/config --disable CONFIG_DVB_ATSC
+          ./scripts/config --disable CONFIG_AMLOGIC_DVB
+          ./scripts/config --disable CONFIG_AMLOGIC_DVB_CA
+          ./scripts/config --disable CONFIG_AMLOGIC_DVB_DSC
 
           # Apply configuration
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
