@@ -91,6 +91,7 @@ struct ca_descr_ex {
 	int          flags;
 #define CA_CW_FROM_KL 1
 	unsigned char cw[16];
+	int mode;
 };
 
 #endif /*CONFIG_AMLOGIC_DVB_COMPAT*/
