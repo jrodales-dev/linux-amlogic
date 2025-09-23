@@ -77,16 +77,18 @@
 #define SEC_BUF_COUNT     (SEC_BUF_GRP_COUNT*8)
 
 // --- Add missing CA_CW_* defines here ---
-#define CA_CW_DVB_CSA_EVEN  0
-#define CA_CW_DVB_CSA_ODD   1
-#define CA_CW_AES_EVEN      2
-#define CA_CW_AES_ODD       3
-#define CA_CW_DES_EVEN      4
-#define CA_CW_DES_ODD       5
-#define CA_CW_SM4_EVEN      6
-#define CA_CW_SM4_ODD       7
-#define CA_CW_SM4_EVEN_IV   8
-#define CA_CW_SM4_ODD_IV    9
+#define CA_CW_DVB_CSA_EVEN   0
+#define CA_CW_DVB_CSA_ODD    1
+#define CA_CW_AES_EVEN       2
+#define CA_CW_AES_ODD        3
+#define CA_CW_DES_EVEN       4
+#define CA_CW_DES_ODD        5
+#define CA_CW_SM4_EVEN       6
+#define CA_CW_SM4_ODD        7
+#define CA_CW_AES_EVEN_IV    8   // <-- ADD THIS
+#define CA_CW_AES_ODD_IV     9   // <-- ADD THIS
+#define CA_CW_SM4_EVEN_IV    10
+#define CA_CW_SM4_ODD_IV     11
 // ----------------------------------------
 
 enum aml_dmx_id_t {
@@ -153,6 +155,7 @@ struct aml_filter {
 #define DSC_SET_SM4_ODD  64
 
 #define DSC_KEY_SIZE_MAX 16
+#define CA_DSC_IDSA 3
 
 struct aml_dsc_channel {
 	int                  pid;
