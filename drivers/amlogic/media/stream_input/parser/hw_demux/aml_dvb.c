@@ -450,6 +450,7 @@ static int get_dsc_key_work_mode(enum ca_cw_type cw_type)
 	case CA_CW_SM4_ODD_IV:
 	case CA_CW_SM4_EVEN_IV:
 		work_mode = CIPLUS_MODE;
+		break; // <-- Add this
 	default:
 		break;
 	}
