@@ -76,6 +76,19 @@
 #define SEC_BUF_BUSY_SIZE 4
 #define SEC_BUF_COUNT     (SEC_BUF_GRP_COUNT*8)
 
+// --- Add missing CA_CW_* defines here ---
+#define CA_CW_DVB_CSA_EVEN  0
+#define CA_CW_DVB_CSA_ODD   1
+#define CA_CW_AES_EVEN      2
+#define CA_CW_AES_ODD       3
+#define CA_CW_DES_EVEN      4
+#define CA_CW_DES_ODD       5
+#define CA_CW_SM4_EVEN      6
+#define CA_CW_SM4_ODD       7
+#define CA_CW_SM4_EVEN_IV   8
+#define CA_CW_SM4_ODD_IV    9
+// ----------------------------------------
+
 enum aml_dmx_id_t {
 	AM_DMX_0 = 0,
 	AM_DMX_1,
@@ -411,4 +424,3 @@ void dmx_reset_dmx_hw_ex_unlock(struct aml_dvb *dvb,
 				int reset_irq);
 
 #endif
-
