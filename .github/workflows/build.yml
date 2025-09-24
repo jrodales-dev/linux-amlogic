@@ -5,11 +5,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-        
+
       - name: Instalar dependências
         run: |
           sudo apt-get update
@@ -34,21 +34,15 @@ jobs:
 
       - name: Verificar estrutura do repositório
         run: |
-          # Listar arquivos para debug
           ls -la
-          # Verificar se Makefile existe
           if [ ! -f "Makefile" ]; then
             echo "ERROR: Makefile não encontrado no root do repositório"
-            echo "Certifique-se que o código do kernel está no repositório"
             exit 1
           fi
-          # Verificar versão do kernel
-          if [ -f "Makefile" ]; then
-            VERSION=$(grep "^VERSION" Makefile | head -1 | awk '{print $3}')
-            PATCHLEVEL=$(grep "^PATCHLEVEL" Makefile | head -1 | awk '{print $3}')
-            SUBLEVEL=$(grep "^SUBLEVEL" Makefile | head -1 | awk '{print $3}')
-            echo "Kernel version detected: $VERSION.$PATCHLEVEL.$SUBLEVEL"
-          fi
+          VERSION=$(grep "^VERSION" Makefile | head -1 | awk '{print $3}')
+          PATCHLEVEL=$(grep "^PATCHLEVEL" Makefile | head -1 | awk '{print $3}')
+          SUBLEVEL=$(grep "^SUBLEVEL" Makefile | head -1 | awk '{print $3}')
+          echo "Kernel version detected: $VERSION.$PATCHLEVEL.$SUBLEVEL"
 
       - name: Limpar build anterior
         run: |
@@ -57,25 +51,18 @@ jobs:
 
       - name: Configurar o Kernel
         run: |
-          # Configurar variáveis de ambiente
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
           export LOCALVERSION="-s905x-a32"
-          
-          # Se existe um .configatv, usar ele
           if [ -f ".configatv" ]; then
             echo "Usando .configatv existente"
             cp .configatv .config
-          # Se existe meson64_a32_defconfig, usar ele
           elif [ -f "arch/arm/configs/meson64_a32_defconfig" ]; then
             echo "Usando meson64_a32_defconfig"
             make ARCH=arm meson64_a32_defconfig
-          # Senão, criar config mínima para S905X ARM32
           else
             echo "Criando configuração base"
             make ARCH=arm multi_v7_defconfig
-            
-            # Ativar configs essenciais para Amlogic S905X em modo ARM32
             ./scripts/config --enable CONFIG_ARCH_MESON
             ./scripts/config --enable CONFIG_ARM64_A32
             ./scripts/config --enable CONFIG_ARCH_MULTI_V7
@@ -88,8 +75,6 @@ jobs:
             ./scripts/config --enable CONFIG_MESON_SARADC
             ./scripts/config --enable CONFIG_SERIAL_MESON
             ./scripts/config --enable CONFIG_SERIAL_MESON_CONSOLE
-            
-            # Configs para Android
             ./scripts/config --enable CONFIG_ANDROID
             ./scripts/config --enable CONFIG_ANDROID_BINDER_IPC
             ./scripts/config --enable CONFIG_ANDROID_BINDER_DEVICES
@@ -101,8 +86,6 @@ jobs:
             ./scripts/config --enable CONFIG_SW_SYNC
             ./scripts/config --enable CONFIG_SW_SYNC_USER
           fi
-          
-          # Aplicar configuração
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
       - name: Exibir informações da configuração
@@ -117,8 +100,6 @@ jobs:
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
           export KCFLAGS="-Wno-error"
-          
-          # Compilar kernel (zImage para ARM32)
           make -j$(nproc) \
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
@@ -133,8 +114,6 @@ jobs:
         run: |
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
-          
-          # Compilar Device Tree Blobs
           make -j$(nproc) \
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
@@ -147,8 +126,6 @@ jobs:
         run: |
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
-          
-          # Compilar módulos
           make -j$(nproc) \
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
@@ -157,8 +134,6 @@ jobs:
             tail -100 build_modules.log
             exit 1
           }
-          
-          # Instalar módulos
           make ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
                INSTALL_MOD_PATH=../kernel_output \
@@ -168,8 +143,6 @@ jobs:
       - name: Preparar artefatos
         run: |
           mkdir -p ../kernel_output/{boot,dtbs,logs}
-          
-          # Copiar kernel
           if [ -f "arch/arm/boot/zImage" ]; then
             cp arch/arm/boot/zImage ../kernel_output/boot/
             echo "zImage copiado com sucesso"
@@ -178,23 +151,15 @@ jobs:
             ls -la arch/arm/boot/
             exit 1
           fi
-          
-          # Copiar DTBs (podem estar em diferentes locais)
-          # Tentar ARM32 primeiro
           if [ -d "arch/arm/boot/dts/amlogic" ]; then
             cp arch/arm/boot/dts/amlogic/meson*.dtb ../kernel_output/dtbs/ 2>/dev/null || true
           fi
-          # Às vezes os DTBs do S905X ainda estão em arm64
           if [ -d "arch/arm/boot/dts" ]; then
             find arch/arm/boot/dts -name "*meson*.dtb" -exec cp {} ../kernel_output/dtbs/ \; 2>/dev/null || true
             find arch/arm/boot/dts -name "*s905*.dtb" -exec cp {} ../kernel_output/dtbs/ \; 2>/dev/null || true
           fi
-          
-          # Copiar config e logs
           cp .config ../kernel_output/
           cp build_*.log ../kernel_output/logs/ 2>/dev/null || true
-          
-          # Criar uImage para U-Boot (comum em TV boxes)
           if [ -f "arch/arm/boot/zImage" ]; then
             mkimage -A arm -O linux -T kernel -C none \
                     -a 0x00208000 -e 0x00208000 \
@@ -202,8 +167,6 @@ jobs:
                     -d arch/arm/boot/zImage \
                     ../kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
           fi
-          
-          # Informações da build
           cat > ../kernel_output/build_info.txt << EOF
           Kernel Version: $(make kernelversion)
           Architecture: ARM (32-bit) para S905X
@@ -212,8 +175,6 @@ jobs:
           Build Date: $(date)
           Config: ARM64_A32 mode
           EOF
-          
-          # Listar o que foi gerado
           echo "=== Conteúdo do output ==="
           ls -laR ../kernel_output/
 
@@ -224,8 +185,6 @@ jobs:
             exit 1
           fi
           echo "zImage size: $(du -h ../kernel_output/boot/zImage)"
-          
-          # Verificar se há pelo menos alguns módulos
           MODULE_COUNT=$(find ../kernel_output/lib/modules -name "*.ko" 2>/dev/null | wc -l)
           echo "Módulos compilados: $MODULE_COUNT"
 
@@ -234,7 +193,7 @@ jobs:
         with:
           name: kernel-s905x-arm32
           path: ../kernel_output/
-          
+
       - name: Upload dos Logs (em caso de erro)
         if: failure()
         uses: actions/upload-artifact@v4
