@@ -31,7 +31,8 @@ jobs:
           export KCFLAGS="-march=armv7-a"
 
           make ARCH=arm meson64_a32_defconfig
-          cp .config-minimal .config
+          # cp .config-minimal .config
+          cp .configatv .config
 
           # Apply configuration
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
