@@ -45,9 +45,9 @@ jobs:
           export CROSS_COMPILE=arm-linux-gnueabihf-
           export CFLAGS="-march=armv7-a"
           export KCFLAGS="-march=armv7-a"
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CFLAGS="-march=armv7-a" KCFLAGS="-march=armv7-a" -j$(nproc)
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- modules
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=../kernel_output modules_install
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CFLAGS="-march=armv7-a" KCFLAGS="-march=armv7-a" V=1 -j$(nproc)
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- V=1 modules
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=../kernel_output V=1 modules_install
 
       - name: Preparar artefatos
         run: |
