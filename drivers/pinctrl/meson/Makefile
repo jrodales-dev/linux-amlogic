@@ -9,4 +9,4 @@ obj-$(CONFIG_AMLOGIC_PINCTRL_MESON8B)  += pinctrl-meson8b.o
 obj-$(CONFIG_AMLOGIC_PINCTRL_MESON_GXBB) += pinctrl-meson-gxbb.o
 
 # Adicione esta linha se você já adicionou o arquivo pinctrl-meson-gxl.c
-# obj-$(CONFIG_AMLOGIC_PINCTRL_MESON_GXL)  += pinctrl-meson-gxl.o
+obj-$(CONFIG_AMLOGIC_PINCTRL_MESON_GXL)  += pinctrl-meson-gxl.o
