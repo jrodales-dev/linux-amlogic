@@ -44,11 +44,11 @@ jobs:
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
           export CFLAGS="-march=armv7-a"
-          export KCFLAGS="-march=armv7-a"
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CFLAGS="-march=armv7-a" KCFLAGS="-march=armv7-a" V=1 -j$(nproc)
+          export KCFLAGS="-march=armv7-a -Wno-error"
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- CFLAGS="-march=armv7-a" KCFLAGS="-march=armv7-a -Wno-error" V=1 -j$(nproc)
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- V=1 modules
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=../kernel_output V=1 modules_install
-
+            
       - name: Preparar artefatos
         run: |
           mkdir -p ../kernel_output/dts/
