@@ -97,18 +97,18 @@ jobs:
 
       - name: Compilar o Kernel
         run: |
-          export ARCH=arm
-          export CROSS_COMPILE=arm-linux-gnueabihf-
-          export KCFLAGS="-Wno-error"
-          make -j$(nproc) \
-               ARCH=arm \
-               CROSS_COMPILE=arm-linux-gnueabihf- \
-               KCFLAGS="-Wno-error" \
-               zImage 2>&1 | tee build_kernel.log || {
-            echo "=== Erro na compilação do kernel ==="
-            tail -100 build_kernel.log
-            exit 1
-          }
+            export ARCH=arm
+            export CROSS_COMPILE=arm-linux-gnueabihf-
+            export KCFLAGS="-Wno-error -march=armv7-a"
+            make -j$(nproc) \
+                 ARCH=arm \
+                 CROSS_COMPILE=arm-linux-gnueabihf- \
+                 KCFLAGS="-Wno-error -march=armv7-a" \
+                 zImage 2>&1 | tee build_kernel.log || {
+              echo "=== Erro na compilação do kernel ==="
+              tail -100 build_kernel.log
+              exit 1
+            }
 
       - name: Compilar DTBs
         run: |
