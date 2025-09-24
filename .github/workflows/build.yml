@@ -1,4 +1,4 @@
-name: Compilar Kernel Amlogic S905X (ARM32)
+name: Compilar Kernel Amlogic S905X (ARM64 para Android 32-bit)
 on:
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar dependências
+      - name: Instalar dependências e Toolchain AArch64
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -24,118 +24,89 @@ jobs:
             rsync \
             git \
             wget \
-            gcc-arm-linux-gnueabihf \
-            g++-arm-linux-gnueabihf \
+            # Removido: gcc-arm-linux-gnueabihf
+            # Adicionado: a toolchain correta de 64-bit
+            gcc-aarch64-linux-gnu \
             device-tree-compiler \
             lzop \
             u-boot-tools \
             cpio \
             kmod
 
-      - name: Verificar estrutura do repositório
-        run: |
-          ls -la
-          if [ ! -f "Makefile" ]; then
-            echo "ERROR: Makefile não encontrado no root do repositório"
-            exit 1
-          fi
-          VERSION=$(grep "^VERSION" Makefile | head -1 | awk '{print $3}')
-          PATCHLEVEL=$(grep "^PATCHLEVEL" Makefile | head -1 | awk '{print $3}')
-          SUBLEVEL=$(grep "^SUBLEVEL" Makefile | head -1 | awk '{print $3}')
-          echo "Kernel version detected: $VERSION.$PATCHLEVEL.$SUBLEVEL"
-
       - name: Limpar build anterior
         run: |
-          make ARCH=arm mrproper || true
+          # Correção: A arquitetura é arm64
+          make ARCH=arm64 mrproper || true
           rm -rf ../kernel_output || true
 
       - name: Configurar o Kernel
         run: |
-          export ARCH=arm
-          export CROSS_COMPILE=arm-linux-gnueabihf-
+          # Correção: Definir a arquitetura correta e a toolchain
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION="-s905x-a32"
-          if [ -f ".configatv" ]; then
-            echo "Usando .configatv existente"
-            cp .configatv .config
-          elif [ -f "arch/arm/configs/meson64_a32_defconfig" ]; then
-            echo "Usando meson64_a32_defconfig"
-            make ARCH=arm meson64_a32_defconfig
+
+          # Correção: O caminho do defconfig agora é em arch/arm64
+          if [ -f "arch/arm64/configs/meson-gxl-s905x-p212_defconfig" ]; then
+            echo "Usando meson-gxl-s905x-p212_defconfig"
+            make ARCH=arm64 meson-gxl-s905x-p212_defconfig
           else
-            echo "Criando configuração base"
-            make ARCH=arm multi_v7_defconfig
-            ./scripts/config --enable CONFIG_ARCH_MESON
-            ./scripts/config --enable CONFIG_ARM64_A32
-            ./scripts/config --enable CONFIG_ARCH_MULTI_V7
-            ./scripts/config --enable CONFIG_MESON_WATCHDOG
-            ./scripts/config --enable CONFIG_I2C_MESON
-            ./scripts/config --enable CONFIG_SPI_MESON_SPIFC
-            ./scripts/config --enable CONFIG_MMC_MESON_GX
-            ./scripts/config --enable CONFIG_COMMON_CLK_MESON
-            ./scripts/config --enable CONFIG_MESON_IRQ_GPIO
-            ./scripts/config --enable CONFIG_MESON_SARADC
-            ./scripts/config --enable CONFIG_SERIAL_MESON
-            ./scripts/config --enable CONFIG_SERIAL_MESON_CONSOLE
-            ./scripts/config --enable CONFIG_ANDROID
-            ./scripts/config --enable CONFIG_ANDROID_BINDER_IPC
-            ./scripts/config --enable CONFIG_ANDROID_BINDER_DEVICES
-            ./scripts/config --set-str CONFIG_ANDROID_BINDER_DEVICES "binder,hwbinder,vndbinder"
-            ./scripts/config --enable CONFIG_STAGING
-            ./scripts/config --enable CONFIG_ASHMEM
-            ./scripts/config --enable CONFIG_ANDROID_LOW_MEMORY_KILLER
-            ./scripts/config --enable CONFIG_SYNC
-            ./scripts/config --enable CONFIG_SW_SYNC
-            ./scripts/config --enable CONFIG_SW_SYNC_USER
+            echo "ERRO: defconfig para S905X não encontrado!"
+            exit 1
           fi
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
+          
+          # Garante que o modo de compatibilidade para 32-bit está ativo
+          ./scripts/config --enable CONFIG_COMPAT
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
       - name: Exibir informações da configuração
         run: |
-          echo "=== Configurações principais ==="
-          grep -E "CONFIG_ARCH_MESON|CONFIG_ARM64_A32|CONFIG_ARCH_MULTI_V7" .config || true
           echo "=== Compilador ==="
-          arm-linux-gnueabihf-gcc --version
+          aarch64-linux-gnu-gcc --version
 
       - name: Compilar o Kernel
         run: |
-            export ARCH=arm
-            export CROSS_COMPILE=arm-linux-gnueabihf-
-            export KCFLAGS="-Wno-error -march=armv7-a"
-            make -j$(nproc) \
-                 ARCH=arm \
-                 CROSS_COMPILE=arm-linux-gnueabihf- \
-                 KCFLAGS="-Wno-error -march=armv7-a" \
-                 zImage 2>&1 | tee build_kernel.log || {
-              echo "=== Erro na compilação do kernel ==="
-              tail -100 build_kernel.log
-              exit 1
-            }
+          # Correção: Exportar as variáveis corretas
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          
+          # Correção: O alvo para arm64 é 'Image.gz' ou 'Image', não 'zImage'
+          make -j$(nproc) \
+               ARCH=arm64 \
+               CROSS_COMPILE=aarch64-linux-gnu- \
+               Image.gz 2>&1 | tee build_kernel.log || {
+            echo "=== Erro na compilação do kernel ==="
+            tail -100 build_kernel.log
+            exit 1
+          }
 
       - name: Compilar DTBs
         run: |
-          export ARCH=arm
-          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
           make -j$(nproc) \
-               ARCH=arm \
-               CROSS_COMPILE=arm-linux-gnueabihf- \
+               ARCH=arm64 \
+               CROSS_COMPILE=aarch64-linux-gnu- \
                dtbs 2>&1 | tee build_dtbs.log || {
             echo "=== Erro na compilação dos DTBs ==="
-            echo "Continuando mesmo com erro (DTBs podem estar em arm64)"
+            tail -100 build_dtbs.log
+            exit 1
           }
 
-      - name: Compilar Módulos
+      - name: Compilar e Instalar Módulos
         run: |
-          export ARCH=arm
-          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
           make -j$(nproc) \
-               ARCH=arm \
-               CROSS_COMPILE=arm-linux-gnueabihf- \
+               ARCH=arm64 \
+               CROSS_COMPILE=aarch64-linux-gnu- \
                modules 2>&1 | tee build_modules.log || {
             echo "=== Erro na compilação dos módulos ==="
             tail -100 build_modules.log
             exit 1
           }
-          make ARCH=arm \
-               CROSS_COMPILE=arm-linux-gnueabihf- \
+          make ARCH=arm64 \
+               CROSS_COMPILE=aarch64-linux-gnu- \
                INSTALL_MOD_PATH=../kernel_output \
                INSTALL_MOD_STRIP=1 \
                modules_install
@@ -143,62 +114,32 @@ jobs:
       - name: Preparar artefatos
         run: |
           mkdir -p ../kernel_output/{boot,dtbs,logs}
-          if [ -f "arch/arm/boot/zImage" ]; then
-            cp arch/arm/boot/zImage ../kernel_output/boot/
-            echo "zImage copiado com sucesso"
+          # Correção: O caminho e o nome da imagem do kernel mudaram
+          if [ -f "arch/arm64/boot/Image.gz" ]; then
+            cp arch/arm64/boot/Image.gz ../kernel_output/boot/
+            echo "Image.gz copiado com sucesso"
           else
-            echo "ERRO: zImage não encontrado!"
-            ls -la arch/arm/boot/
+            echo "ERRO: Image.gz não encontrado!"
+            ls -la arch/arm64/boot/
             exit 1
           fi
-          if [ -d "arch/arm/boot/dts/amlogic" ]; then
-            cp arch/arm/boot/dts/amlogic/meson*.dtb ../kernel_output/dtbs/ 2>/dev/null || true
-          fi
-          if [ -d "arch/arm/boot/dts" ]; then
-            find arch/arm/boot/dts -name "*meson*.dtb" -exec cp {} ../kernel_output/dtbs/ \; 2>/dev/null || true
-            find arch/arm/boot/dts -name "*s905*.dtb" -exec cp {} ../kernel_output/dtbs/ \; 2>/dev/null || true
-          fi
+          
+          # Correção: O caminho dos DTBs mudou
+          cp arch/arm64/boot/dts/amlogic/meson-gxl-s905x-*.dtb ../kernel_output/dtbs/ 2>/dev/null || true
+          
           cp .config ../kernel_output/
           cp build_*.log ../kernel_output/logs/ 2>/dev/null || true
-          if [ -f "arch/arm/boot/zImage" ]; then
-            mkimage -A arm -O linux -T kernel -C none \
-                    -a 0x00208000 -e 0x00208000 \
-                    -n "Linux-$(make kernelversion)" \
-                    -d arch/arm/boot/zImage \
-                    ../kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
-          fi
-          cat > ../kernel_output/build_info.txt << EOF
-          Kernel Version: $(make kernelversion)
-          Architecture: ARM (32-bit) para S905X
-          Target: Amlogic S905X com Android 32-bit
-          Compiler: $(arm-linux-gnueabihf-gcc --version | head -1)
-          Build Date: $(date)
-          Config: ARM64_A32 mode
-          EOF
-          echo "=== Conteúdo do output ==="
-          ls -laR ../kernel_output/
-
-      - name: Verificar artefatos críticos
-        run: |
-          if [ ! -f "../kernel_output/boot/zImage" ]; then
-            echo "ERRO: zImage não foi gerado!"
-            exit 1
-          fi
-          echo "zImage size: $(du -h ../kernel_output/boot/zImage)"
-          MODULE_COUNT=$(find ../kernel_output/lib/modules -name "*.ko" 2>/dev/null | wc -l)
-          echo "Módulos compilados: $MODULE_COUNT"
+          
+          # O uImage geralmente não é usado em arm64, mas mantido por segurança
+          gunzip -k ../kernel_output/boot/Image.gz
+          mkimage -A arm64 -O linux -T kernel -C none \
+                  -a 0x01080000 -e 0x01080000 \
+                  -n "Linux-$(make kernelversion)" \
+                  -d ../kernel_output/boot/Image \
+                  ../kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
 
       - name: Upload dos Artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-s905x-arm32
+          name: kernel-s905x-arm64
           path: ../kernel_output/
-
-      - name: Upload dos Logs (em caso de erro)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs-error
-          path: |
-            build_*.log
-            .config
