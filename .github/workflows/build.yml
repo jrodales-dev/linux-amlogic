@@ -24,8 +24,6 @@ jobs:
             rsync \
             git \
             wget \
-            # Removido: gcc-arm-linux-gnueabihf
-            # Adicionado: a toolchain correta de 64-bit
             gcc-aarch64-linux-gnu \
             device-tree-compiler \
             lzop \
@@ -46,17 +44,7 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION="-s905x-a32"
 
-          # Correção: O caminho do defconfig agora é em arch/arm64
-          if [ -f "arch/arm64/configs/meson-gxl-s905x-p212_defconfig" ]; then
-            echo "Usando meson-gxl-s905x-p212_defconfig"
-            make ARCH=arm64 meson-gxl-s905x-p212_defconfig
-          else
-            echo "ERRO: defconfig para S905X não encontrado!"
-            exit 1
-          fi
-          
-          # Garante que o modo de compatibilidade para 32-bit está ativo
-          ./scripts/config --enable CONFIG_COMPAT
+          cp .configatv .config 
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
       - name: Exibir informações da configuração
