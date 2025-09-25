@@ -1,4 +1,2 @@
-# Makefile corrigido para drivers/pinctrl/meson/
-
-# Arquivo base comum, compilado se qualquer driver meson for usado
-obj-$(CONFIG_PINCTRL_MESON) += pinctrl-meson.o
+obj-y	+= pinctrl-meson8.o pinctrl-meson8b.o pinctrl-meson-gxbb.o
+obj-y	+= pinctrl-meson.o
