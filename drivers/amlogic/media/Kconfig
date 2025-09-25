@@ -6,6 +6,7 @@ menu "Amlogic dvb configuration"
 
 config AMLOGIC_DVB
 	bool "Amlogic dvb support"
+	depends on MEDIA_SUPPORT && MEDIA_DIGITAL_TV_SUPPORT
 	select DVB_CORE
 	select AMLOGIC_DVB_COMPAT
 	default y
