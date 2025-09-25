@@ -44,7 +44,9 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION="-s905x-a32"
 
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- meson64_a32_defconfig
+
+          cp .configatv .config
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
       - name: Exibir informações da configuração
         run: |
