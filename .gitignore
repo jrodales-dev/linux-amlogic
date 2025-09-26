@@ -117,3 +117,5 @@ all.config
 
 # fetched Android config fragments
 kernel/configs/android-*.cfg
+_codeql_detected_source_root
+arch/x86/realmode/rm/realmode.bin
