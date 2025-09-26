@@ -131,4 +131,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kernel-s905x-arm64
-          path: ../kernel_output/
+          path: kernel_output/
