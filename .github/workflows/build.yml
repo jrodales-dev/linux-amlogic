@@ -102,10 +102,10 @@ jobs:
 
       - name: Preparar artefatos
         run: |
-          mkdir -p ../kernel_output/{boot,dtbs,logs}
+          mkdir -p kernel_output/{boot,dtbs,logs}
           # Correção: O caminho e o nome da imagem do kernel mudaram
           if [ -f "arch/arm64/boot/Image.gz" ]; then
-            cp arch/arm64/boot/Image.gz ../kernel_output/boot/
+            cp arch/arm64/boot/Image.gz kernel_output/boot/
             echo "Image.gz copiado com sucesso"
           else
             echo "ERRO: Image.gz não encontrado!"
