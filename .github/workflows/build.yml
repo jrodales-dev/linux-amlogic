@@ -10,6 +10,12 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/.github/workflows/build.yml') }}
+
       - name: Instalar dependências e Toolchain AArch64
         run: |
           sudo apt-get update
