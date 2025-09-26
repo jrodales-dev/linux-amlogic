@@ -35,7 +35,7 @@ jobs:
         run: |
           # Correção: A arquitetura é arm64
           make ARCH=arm64 mrproper || true
-          rm -rf ../kernel_output || true
+          rm -rf kernel_output || true
 
       - name: Configurar o Kernel
         run: |
@@ -96,7 +96,7 @@ jobs:
           }
           make ARCH=arm64 \
                CROSS_COMPILE=aarch64-linux-gnu- \
-               INSTALL_MOD_PATH=../kernel_output \
+               INSTALL_MOD_PATH= kernel_output \
                INSTALL_MOD_STRIP=1 \
                modules_install
 
@@ -114,18 +114,18 @@ jobs:
           fi
           
           # Correção: O caminho dos DTBs mudou
-          cp arch/arm64/boot/dts/amlogic/meson-gxl-s905x-*.dtb ../kernel_output/dtbs/ 2>/dev/null || true
+          cp arch/arm64/boot/dts/amlogic/meson-gxl-s905x-*.dtb kernel_output/dtbs/ 2>/dev/null || true
           
-          cp .config ../kernel_output/
-          cp build_*.log ../kernel_output/logs/ 2>/dev/null || true
+          cp .config kernel_output/
+          cp build_*.log kernel_output/logs/ 2>/dev/null || true
           
           # O uImage geralmente não é usado em arm64, mas mantido por segurança
-          gunzip -k ../kernel_output/boot/Image.gz
+          gunzip -k kernel_output/boot/Image.gz
           mkimage -A arm64 -O linux -T kernel -C none \
                   -a 0x01080000 -e 0x01080000 \
                   -n "Linux-$(make kernelversion)" \
-                  -d ../kernel_output/boot/Image \
-                  ../kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
+                  -d kernel_output/boot/Image \
+                  kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
 
       - name: Upload dos Artefatos
         uses: actions/upload-artifact@v4
