@@ -68,6 +68,11 @@ jobs:
             tail -100 build_dtbs.log
             exit 1
           }
+     
+      - name: Mostrar DTBs gerados
+        run: |
+          echo "Conteúdo de arch/arm64/boot/dts/amlogic/:"
+          ls -la arch/arm64/boot/dts/amlogic/
 
       - name: Preparar artefatos
         run: |
