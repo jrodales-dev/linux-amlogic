@@ -94,9 +94,10 @@ jobs:
             tail -100 build_modules.log
             exit 1
           }
+          mkdir -p kernel_output
           make ARCH=arm64 \
                CROSS_COMPILE=aarch64-linux-gnu- \
-               INSTALL_MOD_PATH= kernel_output \
+               INSTALL_MOD_PATH=kernel_output \
                INSTALL_MOD_STRIP=1 \
                modules_install
 
