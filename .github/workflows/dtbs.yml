@@ -79,13 +79,13 @@ jobs:
         run: |
           mkdir -p kernel_output/{dtbs,logs}
 
-          dtbs=(arch/arm64/boot/dts/amlogic/gxl_p212_*.dtb)
-          if [ ${#dtbs[@]} -eq 0 ]; then
+          DTBS=$(find arch/arm64/boot/dts/amlogic/ -type f -name 'gxl_p212_*.dtb')
+          if [ -z "$DTBS" ]; then
             echo "ERRO: Nenhum DTB gxl_p212_* encontrado!"
             ls -la arch/arm64/boot/dts/amlogic/
             exit 1
           else
-            cp "${dtbs[@]}" kernel_output/dtbs/
+            cp $DTBS kernel_output/dtbs/
             echo "DTBs gxl_p212_* copiados com sucesso"
           fi
           
