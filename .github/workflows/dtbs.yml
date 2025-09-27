@@ -68,6 +68,7 @@ jobs:
             tail -100 build_dtbs.log
             exit 1
           }
+          find . -name 'gxl_p212_*.dtb'
      
       - name: Mostrar DTBs gerados
         run: |
