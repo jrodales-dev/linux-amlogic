@@ -102,6 +102,10 @@ jobs:
                INSTALL_MOD_STRIP=1 \
                modules_install
 
+          # Limpeza dos diretórios desnecessários
+          rm -rf kernel_output/lib/modules/*/build
+          rm -rf kernel_output/lib/modules/*/source
+
       - name: Preparar artefatos
         run: |
           mkdir -p kernel_output/{boot,dtbs,logs}
