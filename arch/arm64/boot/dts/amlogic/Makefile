@@ -3,7 +3,7 @@ dtb-y += gxl_p212_1g.dtb
 dtb-y += gxl_p212_1g_buildroot.dtb
 dtb-y += gxl_p212_1g_hd.dtb
 dtb-y += gxl_p212_2g.dtb
-dtb-y +=gxl_p212_2g_buildroot.dtb
+dtb-y += gxl_p212_2g_buildroot.dtb
 
 targets += dtbs
 
