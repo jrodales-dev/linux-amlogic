@@ -321,3 +321,7 @@ ENTRY(vfp_put_double)
 	.endr
 #endif
 ENDPROC(vfp_put_double)
+
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif
