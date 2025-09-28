@@ -14,9 +14,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-${{ hashFiles('**/.github/workflows/build.yml') }}
+          key: ${{ runner.os }}-apt-${{ hashFiles('**/.github/workflows/build_32.yml') }}
 
-      - name: Instalar dependências e Toolchain AArch64
+      - name: Instalar dependências e Toolchain ARM 32-bit
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -30,7 +30,7 @@ jobs:
             rsync \
             git \
             wget \
-            gcc-aarch64-linux-gnu \
+            gcc-arm-linux-gnueabihf \
             device-tree-compiler \
             lzop \
             u-boot-tools \
@@ -39,32 +39,32 @@ jobs:
 
       - name: Limpar build anterior
         run: |
-          make ARCH=arm64 mrproper || true
+          make ARCH=arm mrproper || true
           rm -rf kernel_output || true
 
       - name: Configurar o Kernel
         run: |
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
-          export LOCALVERSION="-s905x-a32"
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export LOCALVERSION="-s905x-arm32"
 
-          cp .configatv .config
-          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- meson64_a32_defconfig
 
       - name: Exibir informações da configuração
         run: |
           echo "=== Compilador ==="
-          aarch64-linux-gnu-gcc --version
+          arm-linux-gnueabihf-gcc --version
 
       - name: Compilar o Kernel
         run: |
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
           
           make -j$(nproc) \
-               ARCH=arm64 \
-               CROSS_COMPILE=aarch64-linux-gnu- \
-               Image.gz 2>&1 | tee build_kernel.log || {
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
+               UIMAGE_LOADADDR=0x1008000 \
+               uImage 2>&1 | tee build_kernel.log || {
             echo "=== Erro na compilação do kernel ==="
             tail -100 build_kernel.log
             exit 1
@@ -72,11 +72,11 @@ jobs:
 
       - name: Compilar DTBs
         run: |
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
           make -j$(nproc) \
-               ARCH=arm64 \
-               CROSS_COMPILE=aarch64-linux-gnu- \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
                dtbs 2>&1 | tee build_dtbs.log || {
             echo "=== Erro na compilação dos DTBs ==="
             tail -100 build_dtbs.log
@@ -85,19 +85,19 @@ jobs:
 
       - name: Compilar e Instalar Módulos
         run: |
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
           make -j$(nproc) \
-               ARCH=arm64 \
-               CROSS_COMPILE=aarch64-linux-gnu- \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
                modules 2>&1 | tee build_modules.log || {
             echo "=== Erro na compilação dos módulos ==="
             tail -100 build_modules.log
             exit 1
           }
           mkdir -p kernel_output
-          make ARCH=arm64 \
-               CROSS_COMPILE=aarch64-linux-gnu- \
+          make ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
                INSTALL_MOD_PATH=kernel_output \
                INSTALL_MOD_STRIP=1 \
                modules_install
@@ -110,20 +110,20 @@ jobs:
         run: |
           mkdir -p kernel_output/{boot,dtbs,logs}
 
-          if [ -f "arch/arm64/boot/Image.gz" ]; then
-            cp arch/arm64/boot/Image.gz kernel_output/boot/
-            echo "Image.gz copiado com sucesso"
+          if [ -f "arch/arm/boot/uImage" ]; then
+            cp arch/arm/boot/uImage kernel_output/boot/
+            echo "uImage copiado com sucesso"
           else
-            echo "ERRO: Image.gz não encontrado!"
-            ls -la arch/arm64/boot/
+            echo "ERRO: uImage não encontrado!"
+            ls -la arch/arm/boot/
             exit 1
           fi
           
           shopt -s nullglob
-          dtbs=(arch/arm64/boot/dts/amlogic/gxl_p212_*.dtb)
+          dtbs=(arch/arm/boot/dts/amlogic/gxl_p212_*.dtb)
           if [ ${#dtbs[@]} -eq 0 ]; then
             echo "ERRO: Nenhum DTB gxl_p212_* encontrado!"
-            ls -la arch/arm64/boot/dts/amlogic/
+            ls -la arch/arm/boot/dts/amlogic/
             exit 1
           else
             cp "${dtbs[@]}" kernel_output/dtbs/
@@ -132,16 +132,9 @@ jobs:
           
           cp .config kernel_output/
           cp build_*.log kernel_output/logs/ 2>/dev/null || true
-          
-          gunzip -k kernel_output/boot/Image.gz
-          mkimage -A arm64 -O linux -T kernel -C none \
-                  -a 0x01080000 -e 0x01080000 \
-                  -n "Linux-$(make kernelversion)" \
-                  -d kernel_output/boot/Image \
-                  kernel_output/boot/uImage || echo "mkimage falhou (não crítico)"
 
       - name: Upload dos Artefatos
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-s905x-arm64
+          name: kernel-s905x-arm32
           path: kernel_output/
