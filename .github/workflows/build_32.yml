@@ -48,7 +48,9 @@ jobs:
           export CROSS_COMPILE=arm-linux-gnueabihf-
           export LOCALVERSION="-s905x-arm32"
 
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- meson64_a32_defconfig
+
+          cp .configatv .config
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
 
       - name: Exibir informações da configuração
         run: |
