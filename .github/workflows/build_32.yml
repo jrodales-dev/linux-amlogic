@@ -13,15 +13,6 @@ jobs:
       - name: Verificar arquivos antes do cache
         run: ls -lh /var/cache/apt/archives
 
-      - name: Permitir leitura dos arquivos .deb
-        run: sudo chmod a+r /var/cache/apt/archives/*.deb
-
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt
-
       - name: Instalar dependências e Toolchain ARM 32-bit
         run: |
           sudo apt-get update
@@ -42,6 +33,15 @@ jobs:
             u-boot-tools \
             cpio \
             kmod
+
+      - name: Permitir leitura dos arquivos .deb
+        run: sudo chmod a+r /var/cache/apt/archives/*.deb
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt
       
       - name: Verificar arquivos depois do apt-get
         run: ls -lh /var/cache/apt/archives
