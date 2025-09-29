@@ -10,6 +10,9 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Verificar arquivos antes do cache
+        run: ls -lh /var/cache/apt/archives
+
       - name: Cache apt packages
         uses: actions/cache@v4
         with:
@@ -36,6 +39,9 @@ jobs:
             u-boot-tools \
             cpio \
             kmod
+      
+      - name: Verificar arquivos depois do apt-get
+        run: ls -lh /var/cache/apt/archives
 
       - name: Limpar build anterior
         run: |
