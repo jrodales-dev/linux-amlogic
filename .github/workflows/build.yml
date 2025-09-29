@@ -1,4 +1,4 @@
-name: Compilar Kernel Amlogic S905X (ARM64 para Android 32-bit)
+name: Compilar Kernel 64bits
 on:
   workflow_dispatch:
 
