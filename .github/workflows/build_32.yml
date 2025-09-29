@@ -13,6 +13,9 @@ jobs:
       - name: Verificar arquivos antes do cache
         run: ls -lh /var/cache/apt/archives
 
+      - name: Permitir leitura dos arquivos .deb
+        run: sudo chmod a+r /var/cache/apt/archives/*.deb
+
       - name: Cache apt packages
         uses: actions/cache@v4
         with:
