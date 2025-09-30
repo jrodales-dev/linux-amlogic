@@ -207,6 +207,40 @@ jobs:
           echo "Arquivos DTS decompilados: $decompiled_count"
           echo "Arquivos DTSI incluídos: $includes_count"
           
+          # Criar README no diretório de saída
+          cat > kernel_output/README.md << 'EOF'
+          # Kernel Build Output - ARM32 S905X
+          
+          Este diretório contém os artefatos de compilação do kernel Linux para Amlogic S905X (ARM 32-bit).
+          
+          ## Estrutura de Diretórios
+          
+          - **boot/** - Imagem do kernel (zImage)
+          - **dtbs/** - Device Tree Blobs compilados (prontos para uso)
+          - **dts/** - Arquivos Device Tree Source
+            - **original/** - Arquivos DTS originais (com comentários e estrutura)
+            - **decompiled/** - DTS decompilados dos DTBs (para verificação)
+            - **includes/** - Arquivos DTSI incluídos (dependências)
+          - **lib/modules/** - Módulos do kernel
+          - **logs/** - Logs de compilação
+          
+          ## Uso dos Arquivos
+          
+          ### Para usar no dispositivo:
+          - Use os arquivos .dtb da pasta dtbs/
+          - Use o boot/zImage como kernel
+          
+          ### Para desenvolvimento:
+          - Edite os arquivos em dts/original/
+          - Consulte dts/includes/ para entender as dependências
+          
+          ### Para depuração:
+          - Compare dts/original/ com dts/decompiled/ para verificar a compilação
+          - Verifique os logs em logs/ para diagnóstico de problemas
+          
+          Para mais detalhes, consulte DEVICETREE_OUTPUT.md no repositório.
+          EOF
+          
           cp .config kernel_output/
           cp build_*.log kernel_output/logs/ 2>/dev/null || true
 
