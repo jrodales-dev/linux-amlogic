@@ -122,21 +122,53 @@ jobs:
           rm -rf kernel_output/lib/modules/*/build
           rm -rf kernel_output/lib/modules/*/source
 
-      - name: Converter DTBs para DTS
+      - name: Copiar DTS originais e converter DTBs
         run: |
-          mkdir -p kernel_output/dts
+          # Criar diretórios para DTS originais e decompilados
+          mkdir -p kernel_output/dts/original
+          mkdir -p kernel_output/dts/decompiled
+          mkdir -p kernel_output/dts/includes
           
+          # Copiar arquivos DTS originais (preserva estrutura, includes, comentários)
+          echo "Copiando arquivos DTS originais..."
           shopt -s nullglob
+          original_dts=(arch/arm/boot/dts/amlogic/gxl_p212_*.dts)
+          
+          if [ ${#original_dts[@]} -gt 0 ]; then
+            cp "${original_dts[@]}" kernel_output/dts/original/
+            echo "  Copiados ${#original_dts[@]} arquivo(s) DTS originais"
+          else
+            echo "  AVISO: Nenhum arquivo DTS original encontrado"
+          fi
+          
+          # Copiar arquivos DTSI incluídos (dependências)
+          echo "Copiando arquivos DTSI incluídos..."
+          dtsi_files=(
+            arch/arm/boot/dts/amlogic/mesongxl.dtsi
+            arch/arm/boot/dts/amlogic/mesongxl_p212-panel.dtsi
+            arch/arm/boot/dts/amlogic/partition_mbox_normal.dtsi
+            arch/arm/boot/dts/amlogic/meson_drm.dtsi
+            arch/arm/boot/dts/amlogic/mesongxbb-gpu-mali450.dtsi
+          )
+          
+          for dtsi in "${dtsi_files[@]}"; do
+            if [ -f "$dtsi" ]; then
+              cp "$dtsi" kernel_output/dts/includes/
+              echo "  Copiado: $(basename $dtsi)"
+            fi
+          done
+          
+          # Converter DTBs para DTS (para debug/inspeção)
           dtbs=(arch/arm/boot/dts/amlogic/gxl_p212_*.dtb)
           
           if [ ${#dtbs[@]} -eq 0 ]; then
             echo "AVISO: Nenhum DTB gxl_p212_* encontrado para conversão"
           else
-            echo "Convertendo ${#dtbs[@]} DTB(s) para DTS..."
+            echo "Convertendo ${#dtbs[@]} DTB(s) para DTS (decompilado)..."
             for dtb in "${dtbs[@]}"; do
               dts_name=$(basename "$dtb" .dtb).dts
               echo "  Convertendo: $(basename "$dtb") -> $dts_name"
-              dtc -I dtb -O dts -o "kernel_output/dts/$dts_name" "$dtb" 2>/dev/null || {
+              dtc -I dtb -O dts -o "kernel_output/dts/decompiled/$dts_name" "$dtb" 2>/dev/null || {
                 echo "  AVISO: Falha ao converter $(basename "$dtb")"
               }
             done
@@ -167,8 +199,13 @@ jobs:
             echo "DTBs gxl_p212_* copiados: ${#dtbs[@]} arquivo(s)"
           fi
           
-          dts_count=$(ls kernel_output/dts/*.dts 2>/dev/null | wc -l)
-          echo "Arquivos DTS gerados: $dts_count"
+          # Contar e exibir arquivos DTS (originais e decompilados)
+          original_count=$(ls kernel_output/dts/original/*.dts 2>/dev/null | wc -l)
+          decompiled_count=$(ls kernel_output/dts/decompiled/*.dts 2>/dev/null | wc -l)
+          includes_count=$(ls kernel_output/dts/includes/*.dtsi 2>/dev/null | wc -l)
+          echo "Arquivos DTS originais: $original_count"
+          echo "Arquivos DTS decompilados: $decompiled_count"
+          echo "Arquivos DTSI incluídos: $includes_count"
           
           cp .config kernel_output/
           cp build_*.log kernel_output/logs/ 2>/dev/null || true
