@@ -1,4 +1,4 @@
-name: Compilar DTBs
+name: Compilar DTBs 64bits
 on:
   workflow_dispatch:
 
