@@ -17,32 +17,36 @@
 		part-5 = <&param>;
 		part-6 = <&boot>;
 		part-7 = <&rsv>;
-		part-8 = <&tee>;
-		part-9 = <&vendor>;
-		part-10 = <&odm>;
-		part-11 = <&system>;
-		part-12 = <&cache>;
-		part-13 = <&data>;
-    part-14 = <&product>;
-    part-15 = <&vbmeta>;
-    part-16 = <&metadata>;
+		part-8 = <&metadata>;
+		part-9 = <&vbmeta>;
+		part-10 = <&tee>;
+		part-11 = <&vendor>;
+		part-12 = <&odm>;
+		part-13 = <&system>;
+	    part-14 = <&product>;
+	    part-15 = <&cache>;
+	    part-16 = <&data>;
 
-		logo:logo{
+		logo:logo
+		{
 			pname = "logo";
 			size = <0x0 0x800000>;
 			mask = <1>;
 		};
-		recovery:recovery{
+		recovery:recovery
+		{
 			pname = "recovery";
 			size = <0x0 0x1800000>;
 			mask = <1>;
 		};
-		misc:misc{
+		misc:misc
+		{
 			pname = "misc";
 			size = <0x0 0x800000>;
 			mask = <1>;
 		};
-		dtbo:dtbo{
+		dtbo:dtbo
+		{
 			pname = "dtbo";
 			size = <0x0 0x800000>;
 			mask = <1>;
@@ -53,12 +57,26 @@
 			size = <0x0 0x800000>;
 			mask = <2>;
 		};
-		rsv:rsv{
+		rsv:rsv
+		{
 			pname = "rsv";
 			size = <0x0 0x1000000>;
 			mask = <1>;
 		};
-		param:param{
+		metadata:metadata 
+		{
+	      pname = "metadata";
+	      size = <0x0 0x1000000>;
+	      mask = <1>; 
+	    };
+	    vbmeta:vbmeta 
+		{
+	      pname = "vbmeta";
+	      size = <0x0 0x200000>;
+	      mask = <1>;
+	    };
+		param:param
+		{
 			pname = "param";
 			size = <0x0 0x1000000>;
 			mask = <2>;
@@ -69,7 +87,8 @@
 			size = <0x0 0x1000000>;
 			mask = <1>;
 		};
-		tee:tee{
+		tee:tee
+		{
 			pname = "tee";
 			size = <0x0 0x2000000>;
 			mask = <1>;
@@ -92,6 +111,13 @@
 			size = <0x0 0x74000000>;
 			mask = <1>;
 		};
+	    product:product 
+		{
+	      pname = "product";
+	      size = <0x0 0x8000000>;
+	      mask = <1>;
+	    };
+
 		cache:cache
 		{
 			pname = "cache";
@@ -104,24 +130,6 @@
 			size = <0xffffffff 0xffffffff>;
 			mask = <4>;
 		};
-    product:product {
-      pname = "product";
-      size = <0x0 0x8000000>;
-      mask = <1>;
-    };
-
-    vbmeta:vbmeta {
-      pname = "vbmeta";
-      size = <0x0 0x200000>;
-      mask = <1>;
-    };
-
-    metadata:metadata {
-      pname = "metadata";
-      size = <0x0 0x1000000>;
-      mask = <1>; 
-    };
-
 	};
 
 	firmware {
