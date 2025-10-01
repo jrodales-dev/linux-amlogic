@@ -1,0 +1,140 @@
+name: Compilar DTBs 32bits
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/*.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+      
+      - name: Instalar dependências e Toolchain ARM 32-bit
+        run: |
+          # Criar diretório local para cache
+          mkdir -p ~/apt-cache
+          
+          # Restaurar pacotes do cache local
+          if [ -d ~/apt-cache ] && [ "$(ls -A ~/apt-cache)" ]; then
+            echo "Restaurando pacotes do cache..."
+            sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          fi
+          
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libncurses-dev \
+            bison \
+            flex \
+            libssl-dev \
+            libelf-dev \
+            bc \
+            rsync \
+            git \
+            wget \
+            gcc-arm-linux-gnueabihf \
+            device-tree-compiler \
+            lzop \
+            u-boot-tools \
+            cpio \
+            kmod
+          
+          # Salvar pacotes no cache local
+          echo "Salvando pacotes no cache..."
+          sudo cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
+          sudo chown -R $(whoami):$(whoami) ~/apt-cache
+          echo "Cache contém $(ls ~/apt-cache | wc -l) pacotes"
+
+      - name: Limpar build anterior
+        run: |
+          make ARCH=arm mrproper || true
+          rm -rf kernel_output || true
+
+      - name: Configurar o Kernel
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export LOCALVERSION="-s905x-arm32"
+
+          cp .configatv .config
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
+
+      - name: Exibir informações da configuração
+        run: |
+          echo "=== Compilador ==="
+          arm-linux-gnueabihf-gcc --version
+
+      - name: Compilar DTBs
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          make -j$(nproc) \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
+               dtbs 2>&1 | tee build_dtbs.log || {
+            echo "=== Erro na compilação dos DTBs ==="
+            tail -100 build_dtbs.log
+            exit 1
+          }
+          find . -name 'gxl_p212_*.dtb'
+     
+      - name: Mostrar DTBs gerados
+        run: |
+          echo "Conteúdo de arch/arm/boot/dts/amlogic/:"
+          ls -la arch/arm/boot/dts/amlogic/
+
+      - name: Converter DTBs para DTS
+        run: |
+          mkdir -p kernel_output/dts
+          
+          shopt -s nullglob
+          dtbs=(arch/arm/boot/dts/amlogic/gxl_p212_*.dtb)
+          
+          if [ ${#dtbs[@]} -eq 0 ]; then
+            echo "AVISO: Nenhum DTB gxl_p212_* encontrado para conversão"
+          else
+            echo "Convertendo ${#dtbs[@]} DTB(s) para DTS..."
+            for dtb in "${dtbs[@]}"; do
+              dts_name=$(basename "$dtb" .dtb).dts
+              echo "  Convertendo: $(basename "$dtb") -> $dts_name"
+              dtc -I dtb -O dts -o "kernel_output/dts/$dts_name" "$dtb" 2>/dev/null || {
+                echo "  AVISO: Falha ao converter $(basename "$dtb")"
+              }
+            done
+            echo "Conversão concluída!"
+          fi
+
+      - name: Preparar artefatos
+        run: |
+          mkdir -p kernel_output/{dtbs,dts,logs}
+
+          dtbs=(arch/arm/boot/dts/amlogic/gxl_p212_*.dtb)
+          if [ ${#dtbs[@]} -eq 0 ]; then
+            echo "ERRO: Nenhum DTB gxl_p212_* encontrado!"
+            ls -la arch/arm/boot/dts/amlogic/
+            exit 1
+          else
+            cp "${dtbs[@]}" kernel_output/dtbs/
+            echo "DTBs gxl_p212_* copiados: ${#dtbs[@]} arquivo(s)"
+          fi
+          
+          dts_count=$(ls kernel_output/dts/*.dts 2>/dev/null | wc -l)
+          echo "Arquivos DTS gerados: $dts_count"
+          
+          cp .config kernel_output/
+          cp build_*.log kernel_output/logs/ 2>/dev/null || true
+
+      - name: Upload dos Artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-s905x-arm32
+          path: kernel_output/
