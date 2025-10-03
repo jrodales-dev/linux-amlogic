@@ -22,20 +22,35 @@ jobs:
       
       - name: Compare .configatv and meson64_a32_defconfig
         run: |
-          echo "=== Comparing .configatv with meson64_a32_defconfig ==="
+          echo "=== Comparing .configatv with meson64_a32_defconfig ===" | tee config-diff.txt
+          echo "Comparison Date: $(date)" | tee -a config-diff.txt
+          echo "" | tee -a config-diff.txt
+          
           if [ -f .configatv ] && [ -f arch/arm/configs/meson64_a32_defconfig ]; then
-            ./scripts/diffconfig .configatv arch/arm/configs/meson64_a32_defconfig
+            ./scripts/diffconfig .configatv arch/arm/configs/meson64_a32_defconfig | tee -a config-diff.txt
+            echo $? > exit_code.txt
           elif [ -f .configatv ] && [ -f meson64_a32_defconfig ]; then
-            ./scripts/diffconfig .configatv meson64_a32_defconfig
+            ./scripts/diffconfig .configatv meson64_a32_defconfig | tee -a config-diff.txt
+            echo $? > exit_code.txt
           else
-            echo "Error: Config files not found"
-            echo "Looking for files..."
-            find . -name ".configatv" -o -name "meson64_a32_defconfig"
+            echo "Error: Config files not found" | tee -a config-diff.txt
+            echo "Looking for files..." | tee -a config-diff.txt
+            find . -name ".configatv" -o -name "meson64_a32_defconfig" | tee -a config-diff.txt
+            echo "1" > exit_code.txt
             exit 1
           fi
       
       - name: Save comparison results
         if: always()
         run: |
-          echo "Comparison completed at $(date)"
-          echo "Check the job output above for differences"
+          echo "=== Comparison Summary ===" | tee -a config-diff.txt
+          echo "Comparison completed at $(date)" | tee -a config-diff.txt
+          echo "Check the artifact for full differences" | tee -a config-diff.txt
+      
+      - name: Upload diff as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: config-diff-${{ github.sha }}
+          path: config-diff.txt
+          retention-days: 30
