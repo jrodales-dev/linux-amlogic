@@ -1,0 +1,41 @@
+name: Compare Kernel Configs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  compare-configs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Make diffconfig executable
+        run: chmod +x scripts/diffconfig
+      
+      - name: Compare .configatv and meson64_a32_defconfig
+        run: |
+          echo "=== Comparing .configatv with meson64_a32_defconfig ==="
+          if [ -f .configatv ] && [ -f arch/arm64/configs/meson64_a32_defconfig ]; then
+            ./scripts/diffconfig .configatv arch/arm64/configs/meson64_a32_defconfig
+          elif [ -f .configatv ] && [ -f meson64_a32_defconfig ]; then
+            ./scripts/diffconfig .configatv meson64_a32_defconfig
+          else
+            echo "Error: Config files not found"
+            echo "Looking for files..."
+            find . -name ".configatv" -o -name "meson64_a32_defconfig"
+            exit 1
+          fi
+      
+      - name: Save comparison results
+        if: always()
+        run: |
+          echo "Comparison completed at $(date)"
+          echo "Check the job output above for differences"
