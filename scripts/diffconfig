@@ -41,7 +41,10 @@ def readconfig(config_file):
     for line in config_file:
         line = line[:-1]
         if line[:7] == "CONFIG_":
-            name, val = line[7:].split("=", 1)
+            if "=" in line[7:]:
+                name, val = line[7:].split("=", 1)
+            else:
+                continue  # Skip lines without '='
             d[name] = val
         if line[-11:] == " is not set":
             d[line[9:-11]] = "n"
