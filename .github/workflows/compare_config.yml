@@ -23,8 +23,8 @@ jobs:
       - name: Compare .configatv and meson64_a32_defconfig
         run: |
           echo "=== Comparing .configatv with meson64_a32_defconfig ==="
-          if [ -f .configatv ] && [ -f arch/arm64/configs/meson64_a32_defconfig ]; then
-            ./scripts/diffconfig .configatv arch/arm64/configs/meson64_a32_defconfig
+          if [ -f .configatv ] && [ -f arch/arm/configs/meson64_a32_defconfig ]; then
+            ./scripts/diffconfig .configatv arch/arm/configs/meson64_a32_defconfig
           elif [ -f .configatv ] && [ -f meson64_a32_defconfig ]; then
             ./scripts/diffconfig .configatv meson64_a32_defconfig
           else
