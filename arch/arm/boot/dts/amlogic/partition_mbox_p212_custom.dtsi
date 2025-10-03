@@ -6,6 +6,9 @@
  * This file is licensed under a dual GPLv2 or BSD license.
  *
  */
+
+#include "firmware_normal.dtsi"
+
 / {
     partitions: partitions{
 		parts = <17>;
@@ -23,30 +26,26 @@
 		part-11 = <&vendor>;
 		part-12 = <&odm>;
 		part-13 = <&system>;
-	    part-14 = <&product>;
-	    part-15 = <&cache>;
-	    part-16 = <&data>;
+		part-14 = <&product>;
+		part-15 = <&cache>;
+		part-16 = <&data>;
 
-		logo:logo
-		{
+		logo:logo{
 			pname = "logo";
 			size = <0x0 0x800000>;
 			mask = <1>;
 		};
-		recovery:recovery
-		{
+		recovery:recovery{
 			pname = "recovery";
 			size = <0x0 0x1800000>;
 			mask = <1>;
 		};
-		misc:misc
-		{
+		misc:misc{
 			pname = "misc";
 			size = <0x0 0x800000>;
 			mask = <1>;
 		};
-		dtbo:dtbo
-		{
+		dtbo:dtbo{
 			pname = "dtbo";
 			size = <0x0 0x800000>;
 			mask = <1>;
@@ -57,26 +56,22 @@
 			size = <0x0 0x800000>;
 			mask = <2>;
 		};
-		rsv:rsv
-		{
+		rsv:rsv{
 			pname = "rsv";
 			size = <0x0 0x1000000>;
 			mask = <1>;
 		};
-		metadata:metadata 
-		{
-	      pname = "metadata";
-	      size = <0x0 0x1000000>;
-	      mask = <1>; 
-	    };
-	    vbmeta:vbmeta 
-		{
-	      pname = "vbmeta";
-	      size = <0x0 0x200000>;
-	      mask = <1>;
-	    };
-		param:param
-		{
+		metadata:metadata{
+			pname = "metadata";
+			size = <0x0 0x1000000>;
+			mask = <1>;
+		};
+		vbmeta:vbmeta{
+			pname = "vbmeta";
+			size = <0x0 0x200000>;
+			mask = <1>;
+		};
+		param:param{
 			pname = "param";
 			size = <0x0 0x1000000>;
 			mask = <2>;
@@ -87,8 +82,7 @@
 			size = <0x0 0x1000000>;
 			mask = <1>;
 		};
-		tee:tee
-		{
+		tee:tee{
 			pname = "tee";
 			size = <0x0 0x2000000>;
 			mask = <1>;
@@ -102,22 +96,20 @@
 		odm:odm
 		{
 			pname = "odm";
-			size = <0x0 0x10000000>;
+			size = <0x0 0x8000000>;
 			mask = <1>;
 		};
 		system:system
 		{
 			pname = "system";
-			size = <0x0 0x74000000>;
+			size = <0x0 0x50000000>;
 			mask = <1>;
 		};
-	    product:product 
-		{
-	      pname = "product";
-	      size = <0x0 0x8000000>;
-	      mask = <1>;
-	    };
-
+		product:product{
+			pname = "product";
+			size = <0x0 0x8000000>;
+			mask = <1>;
+		};
 		cache:cache
 		{
 			pname = "cache";
@@ -129,56 +121,6 @@
 			pname = "data";
 			size = <0xffffffff 0xffffffff>;
 			mask = <4>;
-		};
-	};
-
-	firmware {
-		android {
-			compatible = "android,firmware";
-			vbmeta {
-				compatible = "android,vbmeta";
-				parts = "boot,system,vendor";
-				by_name_prefix="/dev/block";
-			};
-		fstab {
-			compatible = "android,fstab";
-			system {
-				compatible = "android,system";
-				dev = "/dev/block/system";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
-				};
-
-			vendor {
-				compatible = "android,vendor";
-				dev = "/dev/block/vendor";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
-				};
-			odm {
-				compatible = "android,odm";
-				dev = "/dev/block/odm";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
-				};
-      product {
-        compatible = "android,product";
-        dev = "/dev/block/product";
-        type = "ext4";
-        mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-        fsmgr_flags = "wait";
-        };
-      metadata {
-        compatible = "android,metadata";
-        dev = "/dev/block/metadata";
-        type = "ext4";
-        mnt_flags = "defaults";
-        fsmgr_flags = "wait";
-        };
-			};
 		};
 	};
 };/* end of / */
