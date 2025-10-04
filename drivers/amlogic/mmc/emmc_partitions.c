@@ -939,12 +939,12 @@ static int add_emmc_partition(struct gendisk *disk,
 		size = pp->size >> 9; /* unit:512 bytes */
 		if ((offset + size) <= cap) {
 			ret = add_emmc_each_part(disk, 1+i, offset,
-					size, 0, pp->name);
+					size, pp->mask_flags, pp->name);
 
-			pr_info("[%sp%02d] %20s  offset 0x%012llx, size 0x%012llx %s\n",
+			pr_info("[%sp%02d] %20s  offset 0x%012llx, size 0x%012llx mask_flags=0x%x %s\n",
 					disk->disk_name, 1+i,
 					pp->name, offset<<9,
-					size<<9, IS_ERR(ret) ? "add fail":"");
+					size<<9, pp->mask_flags, IS_ERR(ret) ? "add fail":"");
 		} else {
 			pr_info("[%s] %s: partition exceeds device capacity:\n",
 					__func__, disk->disk_name);
