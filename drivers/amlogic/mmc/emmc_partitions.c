@@ -641,19 +641,30 @@ int get_reserve_partition_off(struct mmc_card *card) /* byte unit */
 	struct amlsd_host *host = mmc_priv(mmc_host);
 
 	storage_flag = host->storage_flag;
+	pr_info("[%s] Initial storage_flag=%d, hostname=%s\n",
+			__func__, storage_flag, mmc_hostname(mmc_host));
+	
 	if (!strcmp(mmc_hostname(mmc_host), "emmc"))
 		storage_flag = EMMC_BOOT_FLAG;
 	if ((storage_flag == EMMC_BOOT_FLAG)
 			|| (storage_flag == SPI_EMMC_FLAG))	{
 		off = MMC_BOOT_PARTITION_SIZE + MMC_BOOT_PARTITION_RESERVED;
+		pr_info("[%s] eMMC/SPI_eMMC detected, partition offset=0x%x\n",
+				__func__, off);
 	} else if ((storage_flag == 0) || (storage_flag == -1)) {
 		if (POR_EMMC_BOOT()) {
 			off = MMC_BOOT_PARTITION_SIZE
 				+ MMC_BOOT_PARTITION_RESERVED;
+			pr_info("[%s] POR_EMMC_BOOT detected, partition offset=0x%x\n",
+					__func__, off);
 		} else if (POR_SPI_BOOT() || POR_CARD_BOOT()) {
 			off = 0;
+			pr_info("[%s] POR_SPI_BOOT/CARD_BOOT detected, partition offset=0x%x\n",
+					__func__, off);
 		} else { /* POR_NAND_BOOT */
 			off = -1;
+			pr_info("[%s] POR_NAND_BOOT detected, no partition table\n",
+					__func__);
 		}
 	} else { /* error, the storage device does NOT relate to eMMC */
 		off = -1;
@@ -755,6 +766,9 @@ static int mmc_read_partition_tbl(struct mmc_card *card,
 					pt_fmt->partitions,
 					pt_fmt->part_num))) {
 
+		pr_info("[%s] Partition table valid: magic=%s, version=%s, part_num=%d, checksum=0x%x\n",
+				__func__, pt_fmt->magic, pt_fmt->version,
+				pt_fmt->part_num, pt_fmt->checksum);
 		ret = 0; /* everything is OK now */
 
 	} else {
@@ -933,10 +947,17 @@ static int add_emmc_partition(struct gendisk *disk,
 	pr_info("add_emmc_partition\n");
 
 	cap = get_capacity(disk); /* unit:512 bytes */
+	pr_info("[%s] Total partitions: %d, Disk capacity: 0x%llx sectors\n",
+			__func__, pt_fmt->part_num, cap);
+	
 	for (i = 0; i < pt_fmt->part_num; i++) {
 		pp = &(pt_fmt->partitions[i]);
 		offset = pp->offset >> 9; /* unit:512 bytes */
 		size = pp->size >> 9; /* unit:512 bytes */
+		
+		pr_info("[%s] Partition %d: name=%s, mask_flags=0x%x, offset=0x%llx, size=0x%llx\n",
+				__func__, i, pp->name, pp->mask_flags, pp->offset, pp->size);
+		
 		if ((offset + size) <= cap) {
 			ret = add_emmc_each_part(disk, 1+i, offset,
 					size, pp->mask_flags, pp->name);
