@@ -122,7 +122,7 @@
 		{
 			pname = "cache";
 			size = <0x0 0x46000000>;
-			mask = <2>;
+			mask = <1>;
 		};
 		data:data
 		{
@@ -140,44 +140,50 @@
 				parts = "vbmeta,boot,system,vendor";
 				by_name_prefix="/dev/block";
 			};
-		fstab {
-			compatible = "android,fstab";
-			system {
-				compatible = "android,system";
-				dev = "/dev/block/system";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
+			fstab {
+				compatible = "android,fstab";
+				system {
+					compatible = "android,system";
+					dev = "/dev/block/system";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
+					fsmgr_flags = "wait";
 				};
-
-			vendor {
-				compatible = "android,vendor";
-				dev = "/dev/block/vendor";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
+				vendor {
+					compatible = "android,vendor";
+					dev = "/dev/block/vendor";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
+					fsmgr_flags = "wait";
 				};
-			odm {
-				compatible = "android,odm";
-				dev = "/dev/block/odm";
-				type = "ext4";
-				mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-				fsmgr_flags = "wait";
+				odm {
+					compatible = "android,odm";
+					dev = "/dev/block/odm";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
+					fsmgr_flags = "wait";
 				};
-      product {
-        compatible = "android,product";
-        dev = "/dev/block/product";
-        type = "ext4";
-        mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
-        fsmgr_flags = "wait";
-        };
-      metadata {
-        compatible = "android,metadata";
-        dev = "/dev/block/metadata";
-        type = "ext4";
-        mnt_flags = "defaults";
-        fsmgr_flags = "wait";
-        };
+				product {
+					compatible = "android,product";
+					dev = "/dev/block/product";
+					type = "ext4";
+					mnt_flags = "ro,barrier=1,inode_readahead_blks=8";
+					fsmgr_flags = "wait";
+				};
+				metadata {
+					compatible = "android,metadata";
+					dev = "/dev/block/metadata";
+					type = "ext4";
+					mnt_flags = "defaults";
+					fsmgr_flags = "wait";
+				};
+				cache {
+					compatible = "android,cache";
+					dev = "/dev/block/cache";
+					type = "ext4";
+					mnt_flags = "nosuid,nodev,noatime,discard,barrier=1,data=ordered";
+					fsmgr_flags = "wait";
+				};
 			};
 		};
 	};
