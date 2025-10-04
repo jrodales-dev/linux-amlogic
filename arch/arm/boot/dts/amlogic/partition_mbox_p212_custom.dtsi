@@ -178,6 +178,13 @@
         mnt_flags = "defaults";
         fsmgr_flags = "wait";
         };
+      cache {
+        compatible = "android,cache";
+        dev = "/dev/block/cache";
+        type = "ext4";
+        mnt_flags = "nosuid,nodev,barrier=1";
+        fsmgr_flags = "wait";
+        };
 			};
 		};
 	};
