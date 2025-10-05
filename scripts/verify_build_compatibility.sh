@@ -31,17 +31,25 @@ INFO_ISSUES=0
 # 1. Verificar UIMAGE_LOADADDR
 echo -e "${BLUE}[1] Verificando UIMAGE_LOADADDR...${NC}"
 EXPECTED_LOADADDR="0x1080000"
-CURRENT_LOADADDR=$(grep "UIMAGE_LOADADDR=" scripts/amlogic/mkimage_32.sh | head -1 | cut -d'=' -f2)
 
-if [ "$CURRENT_LOADADDR" = "$EXPECTED_LOADADDR" ]; then
-    echo -e "${GREEN}✓ UIMAGE_LOADADDR correto: ${CURRENT_LOADADDR}${NC}"
+# Verificar no workflow (que é o que realmente importa)
+if grep -q "UIMAGE_LOADADDR=0x1080000" .github/workflows/build_32.yml 2>/dev/null; then
+    echo -e "${GREEN}✓ UIMAGE_LOADADDR correto no workflow: 0x1080000${NC}"
+    echo -e "${GREEN}✓ Compatível com custom ROM (base: 0x01078000 + offset: 0x00008000)${NC}"
 else
-    echo -e "${RED}✗ UIMAGE_LOADADDR INCORRETO!${NC}"
-    echo -e "  Atual: ${CURRENT_LOADADDR}"
-    echo -e "  Esperado: ${EXPECTED_LOADADDR}"
-    echo -e "  Custom ROM base: 0x01078000, offset: 0x00008000"
-    echo -e "  ${YELLOW}CRÍTICO: O kernel não vai bootar com este endereço!${NC}"
-    ((CRITICAL_ISSUES++))
+    # Fallback: verificar no script mkimage_32.sh
+    CURRENT_LOADADDR=$(grep "UIMAGE_LOADADDR=" scripts/amlogic/mkimage_32.sh 2>/dev/null | head -1 | cut -d'=' -f2)
+    if [ "$CURRENT_LOADADDR" = "$EXPECTED_LOADADDR" ]; then
+        echo -e "${GREEN}✓ UIMAGE_LOADADDR correto no script: ${CURRENT_LOADADDR}${NC}"
+    else
+        echo -e "${RED}✗ UIMAGE_LOADADDR INCORRETO!${NC}"
+        echo -e "  Workflow: não encontrado"
+        echo -e "  Script: ${CURRENT_LOADADDR}"
+        echo -e "  Esperado: ${EXPECTED_LOADADDR}"
+        echo -e "  Custom ROM base: 0x01078000, offset: 0x00008000"
+        echo -e "  ${YELLOW}CRÍTICO: O kernel não vai bootar com este endereço!${NC}"
+        ((CRITICAL_ISSUES++))
+    fi
 fi
 echo ""
 
