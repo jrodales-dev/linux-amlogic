@@ -77,9 +77,13 @@ jobs:
         run: |
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
+          # UIMAGE_LOADADDR ajustado para corresponder à custom ROM
+          # Base: 0x01078000 + Kernel Offset: 0x00008000 = 0x01080000
+          export UIMAGE_LOADADDR=0x1080000
           make -j$(nproc) \
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
+               UIMAGE_LOADADDR=0x1080000 \
                zImage 2>&1 | tee build_kernel.log || {
             echo "=== Erro na compilação do kernel ==="
             tail -100 build_kernel.log
