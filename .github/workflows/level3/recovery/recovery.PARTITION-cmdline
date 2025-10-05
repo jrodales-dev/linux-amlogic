@@ -1,0 +1,1 @@
+androidboot.dtbo_idx=0 root=/dev/mmcblk0p18 androidboot.selinux=permissive otg_device=1 buildvariant=userdebug
