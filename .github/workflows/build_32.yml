@@ -84,7 +84,7 @@ jobs:
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
                UIMAGE_LOADADDR=0x1080000 \
-               zImage 2>&1 | tee build_kernel.log || {
+               uImage 2>&1 | tee build_kernel.log || {
             echo "=== Erro na compilação do kernel ==="
             tail -100 build_kernel.log
             exit 1
@@ -151,11 +151,11 @@ jobs:
         run: |
           mkdir -p kernel_output/{boot,dtbs,dts,logs}
 
-          if [ -f "arch/arm/boot/zImage" ]; then
-            cp arch/arm/boot/zImage kernel_output/boot/
-            echo "zImage copiado com sucesso"
+          if [ -f "arch/arm/boot/uImage" ]; then
+            cp arch/arm/boot/uImage kernel_output/boot/
+            echo "uImage copiado com sucesso"
           else
-            echo "ERRO: zImage não encontrado!"
+            echo "ERRO: uImage não encontrado!"
             ls -la arch/arm/boot/
             exit 1
           fi
