@@ -41,18 +41,29 @@ jobs:
             rsync \
             git \
             wget \
-            gcc-arm-linux-gnueabihf \
             device-tree-compiler \
             lzop \
             u-boot-tools \
             cpio \
             kmod
+
+          # Baixar e instalar Linaro GCC 6.3.1
+          echo "Baixando Linaro GCC 6.3.1..."
+          cd ~
+          wget -q https://releases.linaro.org/components/toolchain/binaries/6.3-2017.02/arm-linux-gnueabihf/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf.tar.xz
+          
+          echo "Extraindo toolchain..."
+          tar -xf gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf.tar.xz
+          
+          echo "Configurando PATH..."
+          echo "$HOME/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin" >> $GITHUB_PATH
           
           # Salvar pacotes no cache local
           echo "Salvando pacotes no cache..."
           sudo cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
           sudo chown -R $(whoami):$(whoami) ~/apt-cache
           echo "Cache contém $(ls ~/apt-cache | wc -l) pacotes"
+
 
       - name: Limpar build anterior
         run: |
