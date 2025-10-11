@@ -593,8 +593,11 @@ static int vidioc_dqbuf(struct file *file, void *priv, struct v4l2_buffer *p)
 	dev->am_parm.master_display_colour
 		= dev->vf->prop.master_display_colour;
 
-	if (!dev->vf->pts_us64)
-		dev->vf->pts_us64 = ((u64)dev->vf->pts * 100) / 9;
+	if (!dev->vf->pts_us64) {
+		u64 pts_calc = (u64)dev->vf->pts * 100;
+		do_div(pts_calc, 9);
+		dev->vf->pts_us64 = pts_calc;
+	}
 
 	if (dev->vf->pts_us64) {
 		dev->first_frame = 1;
