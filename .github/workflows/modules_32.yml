@@ -1,4 +1,4 @@
-name: Compilar Kernel 32bits
+name: Compilar Módulos 32bits
 on:
   workflow_dispatch:
 
