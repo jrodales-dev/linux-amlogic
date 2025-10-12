@@ -1,0 +1,152 @@
+name: Compilar Kernel 32bits
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/*.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+      
+      - name: Instalar dependências e Toolchain ARM 32-bit
+        run: |
+          # Criar diretório local para cache
+          mkdir -p ~/apt-cache
+          
+          # Restaurar pacotes do cache local
+          if [ -d ~/apt-cache ] && [ "$(ls -A ~/apt-cache)" ]; then
+            echo "Restaurando pacotes do cache..."
+            sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          fi
+          
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libncurses-dev \
+            bison \
+            flex \
+            libssl-dev \
+            libelf-dev \
+            bc \
+            rsync \
+            git \
+            wget \
+            device-tree-compiler \
+            lzop \
+            u-boot-tools \
+            cpio \
+            kmod
+
+          # Baixar e instalar Linaro GCC 6.3.1
+          echo "Baixando Linaro GCC 6.3.1..."
+          cd ~
+          wget -q https://releases.linaro.org/components/toolchain/binaries/6.3-2017.02/arm-linux-gnueabihf/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf.tar.xz
+          
+          echo "Extraindo toolchain..."
+          tar -xf gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf.tar.xz
+          
+          echo "Configurando PATH..."
+          echo "$HOME/gcc-linaro-6.3.1-2017.02-x86_64_arm-linux-gnueabihf/bin" >> $GITHUB_PATH
+          
+          # Salvar pacotes no cache local
+          echo "Salvando pacotes no cache..."
+          sudo cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
+          sudo chown -R $(whoami):$(whoami) ~/apt-cache
+          echo "Cache contém $(ls ~/apt-cache | wc -l) pacotes"
+
+      - name: Limpar build anterior
+        run: |
+          make ARCH=arm mrproper || true
+          rm -rf kernel_output || true
+
+      - name: Configurar o Kernel
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          export LOCALVERSION="-s905x-arm32"
+
+          cp .configatv .config
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
+
+      - name: Exibir informações da configuração
+        run: |
+          echo "=== Compilador ==="
+          arm-linux-gnueabihf-gcc --version
+ 
+      - name: Preparar ambiente para módulos
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          make -j$(nproc) \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
+               modules_prepare 2>&1 | tee build_modules_prepare.log || {
+            echo "=== Erro na preparação dos módulos ==="
+            tail -100 build_modules_prepare.log
+            exit 1
+          }
+
+      - name: Compilar e Instalar Módulos
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          
+          # Compilar apenas os módulos Bluetooth específicos
+          echo "Compilando módulos Bluetooth específicos..."
+          
+          make -j$(nproc) \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
+               M=drivers/bluetooth \
+               modules 2>&1 | tee build_modules.log || {
+            echo "=== Erro na compilação dos módulos ==="
+            tail -100 build_modules.log
+            exit 1
+          }
+          
+          # Criar estrutura de diretórios
+          mkdir -p kernel_output/modules
+          
+          # Copiar apenas os módulos específicos
+          echo "Copiando módulos compilados..."
+          for module in bfusb btbcm btintel btrtl btusb; do
+            if [ -f "drivers/bluetooth/${module}.ko" ]; then
+              cp "drivers/bluetooth/${module}.ko" kernel_output/modules/
+              echo "  ✓ ${module}.ko copiado"
+            else
+              echo "  ✗ AVISO: ${module}.ko não encontrado"
+            fi
+          done
+          
+          # Verificar módulos copiados
+          echo ""
+          echo "Módulos compilados:"
+          ls -lh kernel_output/modules/ || echo "Nenhum módulo encontrado"
+
+      - name: Preparar artefatos
+        run: |
+          mkdir -p kernel_output/logs
+          
+          cp .config kernel_output/
+          cp build_*.log kernel_output/logs/ 2>/dev/null || true
+          
+          echo ""
+          echo "=== Resumo da compilação ==="
+          echo "Módulos Bluetooth compilados:"
+          ls -1 kernel_output/modules/*.ko 2>/dev/null || echo "Nenhum módulo encontrado"
+
+      - name: Upload dos Artefatos
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluetooth-modules-arm32
+          path: kernel_output/
