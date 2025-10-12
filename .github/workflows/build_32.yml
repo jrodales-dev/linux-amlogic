@@ -126,6 +126,19 @@ jobs:
             exit 1
           }
 
+      - name: Preparar ambiente para módulos
+        run: |
+          export ARCH=arm
+          export CROSS_COMPILE=arm-linux-gnueabihf-
+          make -j$(nproc) \
+               ARCH=arm \
+               CROSS_COMPILE=arm-linux-gnueabihf- \
+               modules_prepare 2>&1 | tee build_modules_prepare.log || {
+            echo "=== Erro na preparação dos módulos ==="
+            tail -100 build_modules_prepare.log
+            exit 1
+          }
+
       - name: Compilar e Instalar Módulos
         run: |
           export ARCH=arm
