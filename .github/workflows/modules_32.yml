@@ -73,7 +73,6 @@ jobs:
         run: |
           export ARCH=arm
           export CROSS_COMPILE=arm-linux-gnueabihf-
-          export LOCALVERSION="-s905x-arm32"
 
           cp .configatv .config
           make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- olddefconfig
@@ -107,6 +106,7 @@ jobs:
           make -j$(nproc) \
                ARCH=arm \
                CROSS_COMPILE=arm-linux-gnueabihf- \
+               EXTRA_CFLAGS="-fno-stack-protector" \
                M=drivers/bluetooth \
                modules 2>&1 | tee build_modules.log || {
             echo "=== Erro na compilação dos módulos ==="
