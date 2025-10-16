@@ -1477,13 +1477,29 @@ static int btusb_setup_csr(struct hci_dev *hdev)
 	if (IS_ERR(skb)) {
 		int err = PTR_ERR(skb);
 		BT_ERR("%s: CSR: Local version failed (%d)", hdev->name, err);
-		return err;
+		
+		/* Fake CSR devices might fail the version command.
+		 * Set quirks anyway to allow the device to work.
+		 */
+		BT_INFO("%s: CSR: Assuming fake device, setting quirks", hdev->name);
+		clear_bit(HCI_QUIRK_RESET_ON_CLOSE, &hdev->quirks);
+		set_bit(HCI_QUIRK_BROKEN_STORED_LINK_KEY, &hdev->quirks);
+		
+		return 0;
 	}
 
 	if (skb->len != sizeof(struct hci_rp_read_local_version)) {
 		BT_ERR("%s: CSR: Local version length mismatch", hdev->name);
+		
+		/* Fake CSR devices might return wrong length.
+		 * Set quirks anyway to allow the device to work.
+		 */
+		BT_INFO("%s: CSR: Assuming fake device, setting quirks", hdev->name);
+		clear_bit(HCI_QUIRK_RESET_ON_CLOSE, &hdev->quirks);
+		set_bit(HCI_QUIRK_BROKEN_STORED_LINK_KEY, &hdev->quirks);
+		
 		kfree_skb(skb);
-		return -EIO;
+		return 0;
 	}
 
 	rp = (struct hci_rp_read_local_version *)skb->data;
@@ -2984,8 +3000,10 @@ static int btusb_probe(struct usb_interface *intf,
 		if (bcdDevice < 0x117)
 			set_bit(HCI_QUIRK_RESET_ON_CLOSE, &hdev->quirks);
 
-		/* Fake CSR devices with broken commands */
-		if (bcdDevice <= 0x100 || bcdDevice == 0x134)
+		/* Fake CSR devices with broken commands.
+		 * Extend range to catch more fake/clone devices.
+		 */
+		if (bcdDevice <= 0x200 || bcdDevice == 0x134)
 			hdev->setup = btusb_setup_csr;
 
 		set_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks);
