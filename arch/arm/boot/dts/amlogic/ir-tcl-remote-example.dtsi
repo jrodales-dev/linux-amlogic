@@ -1,0 +1,146 @@
+/*
+ * Device Tree Snippet - Configuração IR para Controle Remoto TCL
+ * 
+ * Este arquivo mostra como configurar o receptor IR do Amlogic S905X (GXL)
+ * para usar o keymap do controle remoto TCL.
+ * 
+ * INSTRUÇÕES DE USO:
+ * 
+ * 1. Para TV Box baseada em P212 (S905X), edite um dos arquivos:
+ *    - arch/arm/boot/dts/amlogic/gxl_p212_1g.dts
+ *    - arch/arm/boot/dts/amlogic/gxl_p212_2g.dts
+ * 
+ * 2. Adicione ou modifique a seção &ir com o conteúdo abaixo:
+ * 
+ * 3. Recompile o Device Tree:
+ *    make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs
+ * 
+ * 4. Flash o DTB atualizado na TV Box
+ */
+
+&ir {
+	status = "okay";
+	
+	/* Mapeamento de pinos para o receptor IR */
+	pinctrl-0 = <&remote_pins>;
+	pinctrl-names = "default";
+	
+	/* 
+	 * Keymap para controle remoto TCL
+	 * 
+	 * Opções disponíveis:
+	 * - "rc-tcl-tv"    : Controle remoto TCL (recomendado)
+	 * - "rc-empty"     : Sem keymap (para aprender códigos)
+	 * - Outros keymaps disponíveis em include/media/rc-map.h
+	 */
+	linux,rc-map-name = "rc-tcl-tv";
+	
+	/*
+	 * Protocolo IR (opcional, geralmente auto-detectado)
+	 * Controles TCL usam protocolo NEC
+	 */
+	/* protocol = "nec"; */
+};
+
+/*
+ * EXEMPLO COMPLETO para GXL P212:
+ * 
+ * /dts-v1/;
+ * 
+ * #include "mesongxl.dtsi"
+ * #include "partition_mbox_normal.dtsi"
+ * 
+ * / {
+ *     model = "Amlogic GXL P212 Development Board";
+ *     compatible = "amlogic,p212", "amlogic,meson-gxl";
+ *     
+ *     // ... outras configurações ...
+ * };
+ * 
+ * &ir {
+ *     status = "okay";
+ *     pinctrl-0 = <&remote_pins>;
+ *     pinctrl-names = "default";
+ *     linux,rc-map-name = "rc-tcl-tv";
+ * };
+ * 
+ * // ... outras seções ...
+ */
+
+/*
+ * PINAGEM DO RECEPTOR IR (S905X/GXL):
+ * 
+ * O receptor IR no S905X geralmente está conectado em:
+ * - GPIO: GPIOH_3 (pin mux específico da placa)
+ * - Endereço base: 0xc8100000 (IR_DEC registers)
+ * 
+ * A definição de pinos geralmente está em mesongxl.dtsi:
+ * 
+ * remote_pins: remote {
+ *     mux {
+ *         groups = "remote_input";
+ *         function = "remote";
+ *     };
+ * };
+ */
+
+/*
+ * VERIFICAÇÃO APÓS FLASH:
+ * 
+ * 1. Boot a TV Box com o novo DTB
+ * 
+ * 2. Verifique via ADB:
+ *    adb shell cat /sys/class/rc/rc0/protocols
+ *    # Deve mostrar: [nec] ou outros protocolos
+ * 
+ * 3. Verifique o keymap:
+ *    adb shell cat /sys/devices/platform/*/rc/rc0/uevent
+ *    # Procure por: NAME=rc-tcl-tv
+ * 
+ * 4. Teste o controle:
+ *    adb shell getevent -l /dev/input/event2
+ *    # Pressione teclas do controle TCL
+ */
+
+/*
+ * TROUBLESHOOTING:
+ * 
+ * 1. IR não funciona:
+ *    - Verifique: cat /sys/firmware/devicetree/base/ir@*/status
+ *    - Deve mostrar: "okay"
+ * 
+ * 2. Keymap não carregado:
+ *    - Verifique se o módulo está compilado:
+ *      ls /lib/modules/*/kernel/drivers/media/rc/keymaps/*tcl*
+ *    - Carregue manualmente: modprobe rc-tcl-tv
+ * 
+ * 3. Teclas não respondem:
+ *    - Capture os códigos: ir-keytable -t
+ *    - Compare com os códigos em rc-tcl-tv.c
+ *    - Ajuste o keymap se necessário
+ */
+
+/*
+ * CUSTOMIZAÇÃO:
+ * 
+ * Se o seu controle TCL usar códigos diferentes, você tem duas opções:
+ * 
+ * Opção 1: Editar rc-tcl-tv.c
+ * - Modifique drivers/media/rc/keymaps/rc-tcl-tv.c
+ * - Adicione os scancodes corretos do seu controle
+ * - Recompile o kernel
+ * 
+ * Opção 2: Criar keymap customizado via ir-keytable
+ * - Crie /etc/rc_keymaps/tcl_custom.toml
+ * - Aplique: ir-keytable -w /etc/rc_keymaps/tcl_custom.toml
+ * - Configure para carregar no boot
+ */
+
+/*
+ * REFERÊNCIAS:
+ * 
+ * - Documentação do driver: drivers/media/rc/meson-ir.c
+ * - Device Tree reference: Documentation/devicetree/bindings/media/amlogic,meson-ir.txt
+ * - Keymaps disponíveis: include/media/rc-map.h
+ * - Documentação completa: CONTROLE_REMOTO_TCL_S905X.md
+ */
